@@ -1,4 +1,69 @@
+import keyboard
 from node import Node
+
+
+def moveLeft(status_board, space):
+    if space[0] > 0:
+        status_board.status[space[0]][space[1]] = status_board.status[space[0] - 1][space[1]]
+        status_board.status[space[0] - 1][space[1]] = status_board.status[space[0]][space[1]]
+
+
+def moveRight(status_board, space):
+    if space[0] < len(status_board.status[0]) - 1:
+        status_board.status[space[0]][space[1]] = status_board.status[space[0] + 1][space[1]]
+        status_board.status[space[0] + 1][space[1]] = status_board.status[space[0]][space[1]]
+
+
+def moveUp(status_board, space):
+    if space[0] > 0:
+        status_board.status[space[0]][space[1]] = status_board.status[space[0] - 1][space[1]]
+        status_board.status[space[0] - 1][space[1]] = status_board.status[space[0]][space[1]]
+
+def moveDown(status_board, space):
+    if space[0] < len(status_board.status) - 1:
+        status_board.status[space[0]][space[1]] = status_board.status[space[0] + 1][space[1]]
+        status_board.status[space[0] + 1][space[1]] = status_board.status[space[0]][space[1]]
+
+
+def findSpace(status_board):
+    space = ()
+
+    for i in range(len(status_board.status)):
+        for j in range(len(status_board.status[i])):
+            if status_board.status[i][j] == 'm':
+                space = (i, j)
+    return space
+
+
+# https://github.com/boppreh/keyboard/blob/master/README.md
+# https://github.com/boppreh/keyboard#keyboardeventname
+def operators(status_board):
+    print("Enter operator by pushing one of these keys: \n- Up\n- Down\n- Left\n- Right\n")
+    space = findSpace(status_board)
+
+    while True:
+        event = keyboard.read_event()
+
+        if event.event_type == keyboard.KEY_DOWN:
+            match event.name:
+                case 'down':
+                    print("down")
+                    moveDown(status_board, space)
+                    break
+                case 'up':
+                    print("up")
+                    moveUp(status_board, space)
+                    break
+                case 'left':
+                    print(";eft")
+                    moveLeft(status_board, space)
+                    break
+                case 'right':
+                    print("right")
+                    moveRight(status_board, space)
+                    break
+                case _:
+                    print("Wrong key, only arrows are allowed!")
 
 
 def findBestStatus(status_board):
@@ -20,13 +85,13 @@ def heuristicTiles(status_board, goal_board):
 
     status_board.hx = countTiles(status_board, goal_board)
     print(status_board.hx)
+    operators(status_board)
     findBestStatus(status_board)
 
     return success
 
 
 def countDistance(status_board, goal_board):
-
     # dictionaries
     status_positions = {}
     goal_positions = {}
@@ -59,7 +124,6 @@ def heuristicDistance(status_board, goal_board):
 
 
 def chooseHeuristic(status_board, goal_board):
-
     while True:
         heuristic = input('Pick a Heuristic (Enter a number): \n 1. Misplaced Tiles\n 2. Manhattan Distance\n')
 
@@ -80,7 +144,6 @@ def chooseHeuristic(status_board, goal_board):
 
 
 def showBoard(range_rows, range_cols, board, type_of_board):
-
     print(f'This is {type_of_board} board:')
     for i in range(range_rows):
         for j in range(range_cols):
