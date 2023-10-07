@@ -9,7 +9,7 @@ def countTiles(status_board, goal_board):
     wrong_tiles = 0
     for i in range(len(status_board.status)):
         for j in range(len(status_board.status[i])):
-            if (status_board.status[i][j] != 'm' and goal_board[i][j] != 'm') and status_board.status[i][j] != goal_board[i][j]:
+            if status_board.status[i][j] != 'm' and status_board.status[i][j] != goal_board[i][j]:
                 wrong_tiles += 1
     return wrong_tiles
 
@@ -34,7 +34,7 @@ def countDistance(status_board, goal_board):
     for x1, x2 in zip(range(len(status_board.status)), range(len(goal_board))):
         for y1, y2 in zip(range(len(status_board.status[x1])), range(len(goal_board[x2]))):
             if status_board.status[x1][y1] != 'm':
-                #status_positions[key] = (tuples)
+                # status_positions[key] = (tuples)
                 status_positions[status_board.status[x1][y1]] = (x1, y1)
             if goal_board[x2][y2] != 'm':
                 goal_positions[goal_board[x2][y2]] = (x2, y2)
