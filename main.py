@@ -137,6 +137,7 @@ def heuristicTiles(status_node, final_node):
         set_node = nodes_queue.get()
 
         if set_node.status == final_node.status:
+            showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, "final")
             break
 
         nodes_list = operators(set_node)
@@ -144,6 +145,8 @@ def heuristicTiles(status_node, final_node):
 
         for node in possible_nodes:
             nodes_queue.put(node)
+
+        showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, "status")
 
         i += 1
 
