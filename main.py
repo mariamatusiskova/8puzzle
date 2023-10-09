@@ -1,5 +1,5 @@
+import queue
 import sys
-from queue import PriorityQueue
 from node import Node
 
 def swap(successor_node, space, num_pos):
@@ -29,8 +29,7 @@ def findSpace(status_node):
     for i in range(len(status_node.status)):
         for j in range(len(status_node.status[i])):
             if status_node.status[i][j] == 'm':
-                space = (i, j)
-    return space
+                return (i, j)
 
 
 def copyBoard(board):
@@ -57,7 +56,7 @@ def operators(status_node):
         nodes_list.append(successor_node)
         moveLeft(successor_node, space)
 
-    if canMoveRight(space, successor_node):
+    if canMoveRight(space, status_node):
         successor_node = setNode(status_node, "right")
         nodes_list.append(successor_node)
         moveRight(successor_node, space)
@@ -127,15 +126,15 @@ def heuristicTiles(status_node, final_node):
     status_node.fx = status_node.steps_gx + status_node.hx
 
     i = 0
-    nodes_queue = PriorityQueue()
-    nodes_queue.put(i, status_node)
+    nodes_queue = queue.Queue()
+    nodes_queue.put(status_node)
 
     while True:
 
         if nodes_queue.empty() or i == 1000000:
             break
 
-        _, set_node = nodes_queue.get()
+        set_node = nodes_queue.get()
 
         if set_node.status == final_node.status:
             break
@@ -143,9 +142,10 @@ def heuristicTiles(status_node, final_node):
         nodes_list = operators(set_node)
         possible_nodes = findBestStatus(nodes_list)
 
-        i += 1
         for node in possible_nodes:
-            nodes_queue.put(i, node)
+            nodes_queue.put(node)
+
+        i += 1
 
     return success
 
