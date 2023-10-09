@@ -8,3 +8,4 @@ class Node:
         self.node_depth = 0
         self.steps_gx = 0
         self.hx = 0
+        self.fx = 0
