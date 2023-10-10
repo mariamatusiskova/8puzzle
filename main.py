@@ -132,23 +132,36 @@ def heuristic(current_node, goal_node, heuristic_type):
     nodes_queue.put(((-current_node.steps_gx, next(count_nodes)), current_node))
     # data structure --> hash, index --> value
     existing_boards = set()
+    set_node = status_node
 
     while True:
 
         if nodes_queue.empty():
+            print("\n##############################################")
             print("### Did not find solution for this problem ###")
-            return status_node
+            print("##############################################\n")
+            showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, set_node.board_type)
+            showNodeParam(set_node)
+            break
 
         set_node = nodes_queue.get()[1]
 
         if i == 1000000:
+            print("\n##############################################")
             print("### Did not find solution for this problem ###")
-            return set_node
+            print("##############################################\n")
+            showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, set_node.board_type)
+            showNodeParam(set_node)
+            break
 
         if set_node.status == goal_node.status:
-            print("*** Problem solved ***\n")
+            print("\n**********************")
+            print("*** Problem solved ***")
+            print("**********************\n")
             set_node.board_type = goal_node.board_type
-            return set_node
+            showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, set_node.board_type)
+            showNodeParam(set_node)
+            break
 
         board_tuple = tuple(map(tuple, set_node.status))
         if board_tuple in existing_boards:
@@ -160,6 +173,9 @@ def heuristic(current_node, goal_node, heuristic_type):
 
         for node in possible_nodes:
             nodes_queue.put(((-node.steps_gx, next(count_nodes)), node))
+
+        showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, set_node.board_type)
+        showNodeParam(set_node)
         i += 1
 
 
@@ -191,9 +207,11 @@ def chooseHeuristic(current_node, goal_node):
         try:
             pick_heuristic = int(pick_heuristic)
             if pick_heuristic == 1:
-                return heuristic(current_node, goal_node, "tiles")
+                heuristic(current_node, goal_node, "tiles")
+                break
             elif pick_heuristic == 2:
-                return heuristic(current_node, goal_node, "manhattan")
+                heuristic(current_node, goal_node, "manhattan")
+                break
             else:
                 print("Invalid input. Please enter integer 1 or 2. Try again: ")
                 continue
@@ -202,20 +220,20 @@ def chooseHeuristic(current_node, goal_node):
             continue
 
 
-def showSolution(goal_node):
-    stack = []
-    current_node = goal_node
-
-    # Push nodes onto the stack until we reach the root node
-    while current_node:
-        stack.append(current_node)
-        current_node = current_node.parent
-
-    # Pop and print nodes from the stack in reverse order
-    while stack:
-        current_node = stack.pop()
-        showBoard(len(current_node.status), len(current_node.status[0]), current_node.status, current_node.board_type)
-        showNodeParam(current_node)
+# def showSolution(goal_node):
+#     stack = []
+#     current_node = goal_node
+#
+#     # Push nodes onto the stack until we reach the root node
+#     while current_node:
+#         stack.append(current_node)
+#         current_node = current_node.parent
+#
+#     # Pop and print nodes from the stack in reverse order
+#     while stack:
+#         current_node = stack.pop()
+#         showBoard(len(current_node.status), len(current_node.status[0]), current_node.status, current_node.board_type)
+#         showNodeParam(current_node)
 
 
 def showBoard(range_rows, range_cols, board, type_of_board):
@@ -315,11 +333,9 @@ if __name__ == '__main__':
     while True:
         valid = validateBoards(initial_board, goal_board)
         if valid:
-            result = chooseHeuristic(status_node, final_node)
+            chooseHeuristic(status_node, final_node)
             break
         else:
             print("Try again to type goal_board")
             goal_board = getNode(rows, cols, goal_board, "goal")
             final_node = Node(goal_board, "goal")
-
-    showSolution(result)
