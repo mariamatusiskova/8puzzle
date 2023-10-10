@@ -142,9 +142,10 @@ def heuristic(current_node, goal_node, heuristic_type):
     while True:
 
         if nodes_queue.empty():
-            print("\n##############################################")
-            print("### Did not find solution for this problem ###")
-            print("##############################################\n")
+            print("\n###############################################################")
+            print("### Did not find solution for this problem, queue is empty. ###")
+            print("###############################################################\n")
+            print(count_nodes)
             showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, set_node.board_type)
             showNodeParam(set_node)
             break
@@ -152,9 +153,9 @@ def heuristic(current_node, goal_node, heuristic_type):
         set_node = nodes_queue.get()[1]
 
         if i == 1000000:
-            print("\n##############################################")
-            print("### Did not find solution for this problem ###")
-            print("##############################################\n")
+            print("\n##############################################################")
+            print("### Did not find solution for this problem, too may steps. ###")
+            print("##############################################################\n")
             showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, set_node.board_type)
             showNodeParam(set_node)
             break
@@ -255,7 +256,7 @@ def showNodeParam(node):
     print(f'Previous operators:')
     for operator in node.previous_operators:
         print(f'- {operator}')
-    print(f'Node depth: {node.node_depth}')
+    print(f'----------- Node depth: {node.node_depth}')
     print(f'Heuristic sum: f({node.fx}) = g({node.steps_gx}) + h({node.hx})')
 
 
@@ -293,27 +294,15 @@ def getNode(range_rows, range_cols, board, type_of_board):
     return board
 
 
-def getRows():
+def getSize(size):
     while True:
-        row_range = input('Enter m-dimension (row) of m*n-puzzle problem:')
+        row_range = input(f'Enter {size}-dimension of m*n-puzzle problem:')
 
         try:
             if row_range.isdigit():
                 return int(row_range)
         except ValueError:
-            print("Invalid input. Please enter integer. Try again: ")
-            continue
-
-
-def getCols():
-    while True:
-        column_range = input('Enter n-dimension (column) of m*n-puzzle problem:')
-
-        try:
-            if column_range.isdigit():
-                return int(column_range)
-        except ValueError:
-            print("Invalid input. Please enter integer. Try again: ")
+            print("Invalid input. Please enter positive integer. Try again: ")
             continue
 
 
@@ -328,8 +317,8 @@ if __name__ == '__main__':
     initial_board = []
     goal_board = []
 
-    rows = getRows()
-    cols = getCols()
+    rows = getSize("m")
+    cols = getSize("n")
     initial_board = getNode(rows, cols, initial_board, "initial")
     status_node = Node(initial_board, "initial")
     goal_board = getNode(rows, cols, goal_board, "goal")
@@ -342,5 +331,5 @@ if __name__ == '__main__':
             break
         else:
             print("Try again to type goal_board")
-            goal_board = getNode(rows, cols, goal_board, "goal")
+            goal_board = getNode(rows, cols, [], "goal")
             final_node = Node(goal_board, "goal")
