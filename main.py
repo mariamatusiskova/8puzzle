@@ -1,5 +1,7 @@
 import queue
 import sys
+from itertools import count
+
 from node import Node
 
 def swap(successor_node, space, num_pos):
@@ -24,8 +26,6 @@ def moveDown(successor_node, space):
 
 
 def findSpace(status_node):
-    space = ()
-
     for i in range(len(status_node.status)):
         for j in range(len(status_node.status[i])):
             if status_node.status[i][j] == 'm':
@@ -37,12 +37,14 @@ def copyBoard(board):
 
 
 def setNode(status_node, operator):
-    successor_board = Node(copyBoard(status_node.status))
-    successor_board.parent = status_node
-    successor_board.steps_gx = successor_board.parent.steps_gx + 1
-    successor_board.current_operator = operator
+    successor_node = Node(copyBoard(status_node.status))
+    successor_node.parent = status_node
+    successor_node.steps_gx = status_node.steps_gx + 1
+    successor_node.current_operator = operator
+    successor_node.previous_operators = status_node.previous_operators
+    successor_node.previous_operators.append(operator)
 
-    return successor_board
+    return successor_node
 
 
 # https://github.com/boppreh/keyboard/blob/master/README.md
@@ -121,30 +123,38 @@ def heuristicTiles(status_node, final_node):
     success = 0
     fail = 0
 
-    status_node.hx = countTiles(status_node, final_node)
-    print(status_node.hx)
-    status_node.fx = status_node.steps_gx + status_node.hx
+    nodeCounter = count()
+
 
     i = 0
-    nodes_queue = queue.Queue()
-    nodes_queue.put(status_node)
+    nodes_queue = queue.PriorityQueue()
+    nodes_queue.put(((-status_node.steps_gx, next(nodeCounter)), status_node))
+    # data structure --> hash, index --> value
+    existing_boards = set()
 
     while True:
 
         if nodes_queue.empty() or i == 1000000:
             break
 
-        set_node = nodes_queue.get()
+        set_node = nodes_queue.get()[1]
 
         if set_node.status == final_node.status:
             showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, "final")
             break
 
+        board_tuple = tuple(map(tuple, set_node.status))
+        if board_tuple in existing_boards:
+            continue
+
+        existing_boards.add(board_tuple)
+        status_node.hx = countTiles(status_node, final_node)
+
         nodes_list = operators(set_node)
         possible_nodes = findBestStatus(nodes_list)
 
         for node in possible_nodes:
-            nodes_queue.put(node)
+            nodes_queue.put(((-node.steps_gx, next(nodeCounter)), node))
 
         showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, "status")
 
