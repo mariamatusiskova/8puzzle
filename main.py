@@ -92,12 +92,13 @@ def canMoveDown(space, node):
     return space[0] < len(node.status) - 1
 
 
-def findBestStatus(nodes_list):
+def findBestStatus(nodes_list, final_node):
 
     lower_sum = sys.maxsize
     best_node = []
 
     for node in nodes_list:
+        node.hx = countTiles(node, final_node)
         node.fx = node.steps_gx + node.hx
 
         if node.fx < lower_sum:
@@ -124,7 +125,8 @@ def heuristicTiles(status_node, final_node):
     fail = 0
 
     nodeCounter = count()
-
+    status_node.hx = countTiles(status_node, final_node)
+    status_node.fx = status_node.steps_gx + status_node.hx
 
     i = 0
     nodes_queue = queue.PriorityQueue()
@@ -148,10 +150,9 @@ def heuristicTiles(status_node, final_node):
             continue
 
         existing_boards.add(board_tuple)
-        status_node.hx = countTiles(status_node, final_node)
 
         nodes_list = operators(set_node)
-        possible_nodes = findBestStatus(nodes_list)
+        possible_nodes = findBestStatus(nodes_list, final_board)
 
         for node in possible_nodes:
             nodes_queue.put(((-node.steps_gx, next(nodeCounter)), node))
