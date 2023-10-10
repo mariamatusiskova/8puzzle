@@ -124,7 +124,12 @@ def countTiles(current_node, goal_node):
 
 def heuristic(current_node, goal_node, heuristic_type):
     count_nodes = count()
-    current_node.hx = countTiles(current_node, goal_node)
+
+    if heuristic_type == "tiles":
+        current_node.hx = countTiles(current_node, goal_node)
+    elif heuristic_type == "manhattan":
+        current_node.hx = countDistance(current_node, goal_node)
+
     current_node.fx = current_node.steps_gx + current_node.hx
 
     i = 0
@@ -132,7 +137,7 @@ def heuristic(current_node, goal_node, heuristic_type):
     nodes_queue.put(((-current_node.steps_gx, next(count_nodes)), current_node))
     # data structure --> hash, index --> value
     existing_boards = set()
-    set_node = status_node
+    set_node = current_node
 
     while True:
 
