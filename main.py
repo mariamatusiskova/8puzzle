@@ -1,8 +1,8 @@
 import queue
 import sys
 from itertools import count
-
 from node import Node
+
 
 def swap(successor_node, space, num_pos):
     successor_node.status[space[0]][space[1]], successor_node.status[num_pos[0]][num_pos[1]] = \
@@ -25,51 +25,52 @@ def moveDown(successor_node, space):
     swap(successor_node, space, (space[0] + 1, space[1]))
 
 
-def findSpace(status_node):
-    for i in range(len(status_node.status)):
-        for j in range(len(status_node.status[i])):
-            if status_node.status[i][j] == 'm':
-                return (i, j)
+def findSpace(current_node):
+    for i in range(len(current_node.status)):
+        for j in range(len(current_node.status[i])):
+            if current_node.status[i][j] == 'm':
+                return i, j
 
 
 def copyBoard(board):
-   return [row[:] for row in board]
+    return [row[:] for row in board]
 
 
-def setNode(status_node, operator):
-    successor_node = Node(copyBoard(status_node.status))
-    successor_node.parent = status_node
-    successor_node.steps_gx = status_node.steps_gx + 1
+def setNode(current_node, operator):
+    successor_node = Node(copyBoard(current_node.status), "status")
+    successor_node.parent = current_node
+    successor_node.steps_gx = current_node.steps_gx + 1
     successor_node.current_operator = operator
-    successor_node.previous_operators = status_node.previous_operators
+    successor_node.previous_operators = current_node.previous_operators.copy()
     successor_node.previous_operators.append(operator)
+    successor_node.node_depth = current_node.node_depth + 1
 
     return successor_node
 
 
 # https://github.com/boppreh/keyboard/blob/master/README.md
 # https://github.com/boppreh/keyboard#keyboardeventname
-def operators(status_node):
-    space = findSpace(status_node)
+def operators(current_node):
+    space = findSpace(current_node)
     nodes_list = []
 
     if canMoveLeft(space):
-        successor_node = setNode(status_node, "left")
+        successor_node = setNode(current_node, "left")
         nodes_list.append(successor_node)
         moveLeft(successor_node, space)
 
-    if canMoveRight(space, status_node):
-        successor_node = setNode(status_node, "right")
+    if canMoveRight(space, current_node):
+        successor_node = setNode(current_node, "right")
         nodes_list.append(successor_node)
         moveRight(successor_node, space)
 
     if canMoveUp(space):
-        successor_node = setNode(status_node, "up")
+        successor_node = setNode(current_node, "up")
         nodes_list.append(successor_node)
         moveUp(successor_node, space)
 
-    if canMoveDown(space, successor_node):
-        successor_node = setNode(status_node, "down")
+    if canMoveDown(space, current_node):
+        successor_node = setNode(current_node, "down")
         nodes_list.append(successor_node)
         moveDown(successor_node, space)
 
@@ -92,13 +93,15 @@ def canMoveDown(space, node):
     return space[0] < len(node.status) - 1
 
 
-def findBestStatus(nodes_list, final_node):
-
+def findBestStatus(nodes_list, goal_node, heuristic_type):
     lower_sum = sys.maxsize
     best_node = []
 
     for node in nodes_list:
-        node.hx = countTiles(node, final_node)
+        if heuristic_type == "tiles":
+            node.hx = countTiles(node, goal_node)
+        elif heuristic_type == "manhattan":
+            node.hx = countDistance(node, goal_node)
         node.fx = node.steps_gx + node.hx
 
         if node.fx < lower_sum:
@@ -110,72 +113,68 @@ def findBestStatus(nodes_list, final_node):
     return best_node
 
 
-
-def countTiles(status_node, final_node):
+def countTiles(current_node, goal_node):
     wrong_tiles = 0
-    for i in range(len(status_node.status)):
-        for j in range(len(status_node.status[i])):
-            if status_node.status[i][j] != 'm' and status_node.status[i][j] != final_node.status[i][j]:
+    for i in range(len(current_node.status)):
+        for j in range(len(current_node.status[i])):
+            if current_node.status[i][j] != 'm' and current_node.status[i][j] != goal_node.status[i][j]:
                 wrong_tiles += 1
     return wrong_tiles
 
 
-def heuristicTiles(status_node, final_node):
-    success = 0
-    fail = 0
-
-    nodeCounter = count()
-    status_node.hx = countTiles(status_node, final_node)
-    status_node.fx = status_node.steps_gx + status_node.hx
+def heuristic(current_node, goal_node, heuristic_type):
+    count_nodes = count()
+    current_node.hx = countTiles(current_node, goal_node)
+    current_node.fx = current_node.steps_gx + current_node.hx
 
     i = 0
     nodes_queue = queue.PriorityQueue()
-    nodes_queue.put(((-status_node.steps_gx, next(nodeCounter)), status_node))
+    nodes_queue.put(((-current_node.steps_gx, next(count_nodes)), current_node))
     # data structure --> hash, index --> value
     existing_boards = set()
 
     while True:
 
-        if nodes_queue.empty() or i == 1000000:
-            break
+        if nodes_queue.empty():
+            print("### Did not find solution for this problem ###")
+            return status_node
 
         set_node = nodes_queue.get()[1]
 
-        if set_node.status == final_node.status:
-            showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, "final")
-            break
+        if i == 1000000:
+            print("### Did not find solution for this problem ###")
+            return set_node
+
+        if set_node.status == goal_node.status:
+            print("*** Problem solved ***\n")
+            set_node.board_type = goal_node.board_type
+            return set_node
 
         board_tuple = tuple(map(tuple, set_node.status))
         if board_tuple in existing_boards:
             continue
 
         existing_boards.add(board_tuple)
-
         nodes_list = operators(set_node)
-        possible_nodes = findBestStatus(nodes_list, final_board)
+        possible_nodes = findBestStatus(nodes_list, goal_node, heuristic_type)
 
         for node in possible_nodes:
-            nodes_queue.put(((-node.steps_gx, next(nodeCounter)), node))
-
-        showBoard(len(set_node.status), len(set_node.status[0]), set_node.status, "status")
-
+            nodes_queue.put(((-node.steps_gx, next(count_nodes)), node))
         i += 1
 
-    return success
 
-
-def countDistance(status_node, final_node):
+def countDistance(current_node, goal_node):
     # dictionaries
     status_positions = {}
     goal_positions = {}
 
-    for x1, x2 in zip(range(len(status_node.status)), range(len(final_node.status))):
-        for y1, y2 in zip(range(len(status_node.status[x1])), range(len(final_node.status[x2]))):
-            if status_node.status[x1][y1] != 'm':
+    for x1, x2 in zip(range(len(current_node.status)), range(len(goal_node.status))):
+        for y1, y2 in zip(range(len(current_node.status[x1])), range(len(goal_node.status[x2]))):
+            if current_node.status[x1][y1] != 'm':
                 # status_positions[key] = (tuples)
-                status_positions[status_node.status[x1][y1]] = (x1, y1)
-            if final_node[x2][y2] != 'm':
-                goal_positions[final_node.status[x2][y2]] = (x2, y2)
+                status_positions[current_node.status[x1][y1]] = (x1, y1)
+            if goal_node.status[x2][y2] != 'm':
+                goal_positions[goal_node.status[x2][y2]] = (x2, y2)
 
     distance = 0
     for num, (sx, sy) in status_positions.items():
@@ -185,29 +184,16 @@ def countDistance(status_node, final_node):
     return distance
 
 
-def heuristicDistance(status_node, final_node):
-    success = 0
-    fail = 0
-
-    status_node.hx = countDistance(status_node, final_node)
-    print(status_node.hx)
-    findBestStatus(status_node)
-
-    return success
-
-
-def chooseHeuristic(status_node, final_node):
+def chooseHeuristic(current_node, goal_node):
     while True:
-        heuristic = input('Pick a Heuristic (Enter a number): \n 1. Misplaced Tiles\n 2. Manhattan Distance\n')
+        pick_heuristic = input('Pick a Heuristic (Enter a number): \n 1. Misplaced Tiles\n 2. Manhattan Distance\n')
 
         try:
-            heuristic = int(heuristic)
-            if heuristic == 1:
-                heuristicTiles(status_node, final_node)
-                break
-            elif heuristic == 2:
-                heuristicDistance(status_node, final_node)
-                break
+            pick_heuristic = int(pick_heuristic)
+            if pick_heuristic == 1:
+                return heuristic(current_node, goal_node, "tiles")
+            elif pick_heuristic == 2:
+                return heuristic(current_node, goal_node, "manhattan")
             else:
                 print("Invalid input. Please enter integer 1 or 2. Try again: ")
                 continue
@@ -216,19 +202,44 @@ def chooseHeuristic(status_node, final_node):
             continue
 
 
+def showSolution(goal_node):
+    stack = []
+    current_node = goal_node
+
+    # Push nodes onto the stack until we reach the root node
+    while current_node:
+        stack.append(current_node)
+        current_node = current_node.parent
+
+    # Pop and print nodes from the stack in reverse order
+    while stack:
+        current_node = stack.pop()
+        showBoard(len(current_node.status), len(current_node.status[0]), current_node.status, current_node.board_type)
+        showNodeParam(current_node)
+
+
 def showBoard(range_rows, range_cols, board, type_of_board):
-    print(f'This is {type_of_board} board:')
+
+    print(f'\nThis is {type_of_board} board:')
     for i in range(range_rows):
         for j in range(range_cols):
             print(f"| {board[i][j]} ", end="")
         print("|")
-    print("\n")
+
+
+def showNodeParam(node):
+    print(f'Last used operator: {node.current_operator}')
+    print(f'Previous operators:')
+    for operator in node.previous_operators:
+        print(f'- {operator}')
+    print(f'Node depth: {node.node_depth}')
+    print(f'Heuristic sum: f({node.fx}) = g({node.steps_gx}) + h({node.hx})')
 
 
 def getNode(range_rows, range_cols, board, type_of_board):
     m_count = 0
 
-    print(f'Enter {type_of_board} 8-puzzle problem (use ''m'' to represent the empty space):')
+    print(f'\nEnter {type_of_board} 8-puzzle problem (use ''m'' to represent the empty space):')
     for i in range(range_rows):
         get_element = []
         for j in range(range_cols):
@@ -259,16 +270,56 @@ def getNode(range_rows, range_cols, board, type_of_board):
     return board
 
 
-if __name__ == '__main__':
-    rows = 3
-    cols = 3
+def getRows():
+    while True:
+        row_range = input('Enter m-dimension (row) of m*n-puzzle problem:')
 
+        try:
+            if row_range.isdigit():
+                return int(row_range)
+        except ValueError:
+            print("Invalid input. Please enter integer. Try again: ")
+            continue
+
+
+def getCols():
+    while True:
+        column_range = input('Enter n-dimension (column) of m*n-puzzle problem:')
+
+        try:
+            if column_range.isdigit():
+                return int(column_range)
+        except ValueError:
+            print("Invalid input. Please enter integer. Try again: ")
+            continue
+
+
+def validateBoards(current_board, final_board):
+
+    not_solved_board = {item for row in current_board for item in row}
+    solved_board = {item for row in final_board for item in row}
+    return not_solved_board == solved_board
+
+
+if __name__ == '__main__':
     initial_board = []
     goal_board = []
 
+    rows = getRows()
+    cols = getCols()
     initial_board = getNode(rows, cols, initial_board, "initial")
-    status_node = Node(initial_board)
-    current_parent = status_node
+    status_node = Node(initial_board, "initial")
     goal_board = getNode(rows, cols, goal_board, "goal")
-    final_board = Node(goal_board)
-    chooseHeuristic(status_node, final_board)
+    final_node = Node(goal_board, "goal")
+
+    while True:
+        valid = validateBoards(initial_board, goal_board)
+        if valid:
+            result = chooseHeuristic(status_node, final_node)
+            break
+        else:
+            print("Try again to type goal_board")
+            goal_board = getNode(rows, cols, goal_board, "goal")
+            final_node = Node(goal_board, "goal")
+
+    showSolution(result)
