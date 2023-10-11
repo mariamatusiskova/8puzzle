@@ -150,7 +150,7 @@ def heuristic(current_node, goal_node, heuristic_type):
             showNodeParam(set_node)
             break
 
-        set_node = nodes_queue.get()[1]
+        set_node = nodes_queue.get(block=False)[1]
 
         if i == 1000000:
             print("\n##############################################################")
